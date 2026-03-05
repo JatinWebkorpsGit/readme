@@ -69,19 +69,6 @@ ECS services consume secrets at runtime
 
 HashiCorp Vault acts as the **primary secret storage**, while AWS Secrets Manager securely exposes those secrets to AWS services.
 
-## AWS Secrets Manager Paths
-
-The following secrets are stored under the Mobile BFF production namespace:
-
-* /mobilebff/prod/ssl
-* /mobilebff/prod/service_jwt_secret
-* /mobilebff/prod/secret_id
-* /mobilebff/prod/bwr_rws_dcp_bff_mobile_cert
-* /mobilebff/prod/bwr_rws_dcp_bff_mobile_key
-* /mobilebff/prod/cors_origin
-* /mobilebff/prod/role_id
-* /mobilebff/prod/aqua_token
-* /mobilebff/prod/dd_api_key
 
 ## Purpose of Key Secrets
 
