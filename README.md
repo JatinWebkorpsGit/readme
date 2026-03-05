@@ -25,21 +25,34 @@ This document provides an overview of the production infrastructure, services, a
 The production infrastructure was created in the following sequence:
 
 ```
-1. VPC, Subnets, and Transit Gateway configurations (Network Team)
 
-2. Secrets created in HashiCorp Vault
+1. VPC, Subnets, and Transit Gateway configurations were provisioned by the Network Team.
 
-3. ECR (Production) repository created
+2. Application secrets were created and stored in HashiCorp Vault.
 
-4. Firehose (Production) configured for logging and streaming
+3. ECR production repository was provisioned to store Mobile BFF container images.
 
-5. json2tf used to convert infrastructure definitions to Terraform
+   Terraform Stack:
+   https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_ecr_prod
 
-6. ECS Production cluster and services created
+4. Kinesis Firehose production pipeline was created for log and data streaming.
 
-7. ECS VPC Link (CTLZ) configured for API Gateway connectivity
+   Terraform Stack:
+   https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_firehose_prod
 
-8. Lambda function created for SSL management
+5. json2tf was used to convert existing AWS infrastructure resources into Terraform configuration.
+
+6. ECS production infrastructure was provisioned including cluster, services, task definitions, load balancers, IAM roles, Route53 records, and integrations.
+
+   Terraform Stack:
+   https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_ecs_prod
+
+7. ECS VPC Link (CTLZ) was configured to allow API Gateway to communicate with services inside the VPC.
+
+8. Lambda-based SSL management infrastructure was deployed for certificate handling.
+
+   Terraform Stack:
+   https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_ssl_mgmt_prod
 ```
 
 ---
@@ -186,19 +199,19 @@ Typical deployment workflow:
 1. Initialize Terraform
 
 ```
-terraform init
+tfv init
 ```
 
 2. Review infrastructure changes
 
 ```
-terraform plan
+tfv plan
 ```
 
 3. Apply infrastructure
 
 ```
-terraform apply
+tfv apply
 ```
 
 Terraform state is stored remotely according to the organization’s infrastructure standards.
@@ -239,6 +252,6 @@ bwh-mobile-bff
 
 # Maintainers
 
-Infrastructure maintained by the **Cloud / DevOps Team**.
+Infrastructure maintained by the **Mobile Team**.
 
 For infrastructure changes or production issues, contact the platform engineering team.
