@@ -1,3 +1,4 @@
+
 # Mobile BFF – Production Infrastructure
 
 ## Overview
@@ -258,28 +259,51 @@ Terraform state is stored remotely according to the organization’s infrastruct
 bwh-mobile-bff
 │
 └── stacks
-    ├── mobile_bff_ecs_dev
-    ├── mobile_bff_ecs_qa
+    └── mobile_bff_ecr_prod
+    |    ├── data.tf
+    |    ├── locals.tf
+    |    ├── main.tf
+    |    ├── metadata.tf
+    |    ├── outputs.tf
+    |    ├── terraform.tf
+    |    ├── terraform.tfvars
+    |    ├── variables.tf
+    |    └── versions.tf
+    |
     └── mobile_bff_ecs_prod
-        ├── acm.tf
-        ├── alb.tf
-        ├── apigw.tf
-        ├── aws.tf
-        ├── container_definition.tf
-        ├── data.tf
-        ├── ecs.tf
-        ├── iam.tf
-        ├── kms.tf
-        ├── locals.tf
-        ├── metadata.tf
-        ├── nlb.tf
-        ├── route53.tf
-        ├── secrets.tf
-        ├── terraform.tf
-        ├── terraform.tfvars
-        ├── variables.tf
-        ├── vault.tf
-        └── versions.tf
+    |    ├── acm.tf
+    |    ├── alb.tf
+    |    ├── apigw.tf
+    |    ├── aws.tf
+    |    ├── container_definition.tf
+    |    ├── data.tf
+    |    ├── ecs.tf
+    |    ├── iam.tf
+    |    ├── kms.tf
+    |    ├── locals.tf
+    |    ├── metadata.tf
+    |    ├── nlb.tf
+    |    ├── route53.tf
+    |    ├── secrets.tf
+    |    ├── terraform.tf
+    |    ├── terraform.tfvars
+    |    ├── variables.tf
+    |    ├── vault.tf
+    |    └── versions.tf
+    |
+    └── mobile_bff_firehose_prod
+    |    ├── call-fh-delivery-module.tf
+    |    ├── terraform.tf
+    |    ├── terraform.tfvars
+    |    ├── variables.tf
+    |    └── versions.tf
+    |
+    └── mobile_bff_ssl_mgmt_prod
+         ├── main.tf
+         ├── terraform.tf
+         ├── terraform.tfvars
+         ├── variables.tf
+         └── versions.tf
 ```
 
 ---
