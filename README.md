@@ -16,7 +16,7 @@ This document provides an overview of the production infrastructure, services, a
 | Environment    | Production |
 | Application    | Mobile BFF |
 | Cloud Provider | AWS        |
-| Region         | us-west-2  |
+| Region         | us-west-2 (Oregon)  |
 
 ---
 
@@ -24,7 +24,6 @@ This document provides an overview of the production infrastructure, services, a
 
 The production infrastructure was created in the following sequence:
 
-```
 
 1. VPC, Subnets, and Transit Gateway configurations were provisioned by the Network Team.
 
@@ -40,20 +39,55 @@ The production infrastructure was created in the following sequence:
    Terraform Stack:
    https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_firehose_prod
 
-5. json2tf was used to convert existing AWS infrastructure resources into Terraform configuration.
+5. json2tf was used to convert JSON-based infrastructure definitions into Terraform configuration, primarily for generating AWS Security Group resources.
 
 6. ECS production infrastructure was provisioned including cluster, services, task definitions, load balancers, IAM roles, Route53 records, and integrations.
+
+   Terraform Stack:  
+   https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_ecs_prod
+
+   The ECS stack was applied in two stages:
+
+   • During the first Terraform apply, the Lambda-based SSL management configuration was temporarily commented out because it required the `mobile_bff_cert_renewal` resources to exist.
+
+   • After the required resources were created, the SSL management configuration was uncommented and Terraform was applied again.
+
+7. ECS VPC Link (CTLZ) was required to allow API Gateway to communicate with services running inside the VPC.
 
    Terraform Stack:
    https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_ecs_prod
 
-7. ECS VPC Link (CTLZ) was configured to allow API Gateway to communicate with services inside the VPC.
+   Note:
+   The Mobile team did not have sufficient permissions to create the VPC Link.
+   Therefore, a request was raised with the Infrastructure/Platform Engineering team,
+   and they executed `tfv apply` to provision the VPC Link.
 
-8. Lambda-based SSL management infrastructure was deployed for certificate handling.
+8. Lambda-based SSL management infrastructure was deployed for certificate management and renewal.
 
-   Terraform Stack:
+   Terraform Stack:  
    https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_ssl_mgmt_prod
-```
+
+   The SSL management stack creates a Lambda function responsible for certificate renewal and an EventBridge rule that triggers the Lambda.
+
+   Post Deployment Validation:
+
+   a. Navigate to the EventBridge rule created by the SSL management stack.
+
+   b. Open the **Trigger** configuration.
+
+   c. Go to **Targets** and select the Lambda function target.
+
+   d. View the **Constant Input** section and copy the JSON payload.
+
+   e. Navigate to the created Lambda function.
+
+   f. Open the **Test** tab.
+
+   g. Paste the copied JSON payload into the test event.
+
+   h. Run the test to trigger the Lambda and verify certificate renewal.
+
+   This step ensures the certificate renewal workflow is functioning correctly.
 
 ---
 
