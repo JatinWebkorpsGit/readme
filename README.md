@@ -1,55 +1,123 @@
-# BWH Mobile BFF – Production Infrastructure
+# Mobile BFF – Production Infrastructure
 
 ## Overview
 
-This repository contains Terraform infrastructure code used to provision and manage the AWS production infrastructure supporting the **Best Western Mobile Backend-for-Frontend (Mobile BFF)** services.
+The **Mobile BFF (Backend for Frontend)** service is deployed on AWS using **ECS Fargate**.
+Container images are stored in **Amazon ECR**, and the service runs inside an ECS cluster with multiple supporting containers for monitoring and security.
 
-The infrastructure is deployed on AWS using **Infrastructure as Code (IaC)** principles with Terraform.
-It provisions the compute platform, networking integrations, container orchestration, secrets management, logging, and supporting services required to run the Mobile BFF application in production.
+This document provides an overview of the production infrastructure, services, and health endpoints.
 
 ---
 
-# AWS Account Details
+# Environment Details
 
-AWS Account Name: **o2-a177-mobile-bff-prod**
-AWS Account ID: **738605694587**
-Region: **us-west-2 (Oregon)**
-Application: **Mobile BFF**
-Environment: **Production**
+| Property       | Value      |
+| -------------- | ---------- |
+| Environment    | Production |
+| Application    | Mobile BFF |
+| Cloud Provider | AWS        |
+| Region         | us-west-2  |
 
 ---
 
 # Infrastructure Creation Flow
 
-The Mobile BFF infrastructure was created in the following sequence:
+The production infrastructure was created in the following sequence:
 
-1. VPC, Subnets, and Transit Gateway configuration (Network Team)
-2. Secrets stored in HashiCorp Vault
-3. Amazon ECR repository creation
-4. Amazon Kinesis Firehose configuration
-5. JSON to Terraform resource generation (json2tf)
-6. Amazon ECS cluster and services deployment
-7. ECS VPC Link configuration (CTLZ)
-8. Lambda function for SSL certificate management
+```
+1. VPC, Subnets, and Transit Gateway configurations (Network Team)
 
-This sequence ensures that networking, secrets, and supporting services are available before application services are deployed.
+2. Secrets created in HashiCorp Vault
+
+3. ECR (Production) repository created
+
+4. Firehose (Production) configured for logging and streaming
+
+5. json2tf used to convert infrastructure definitions to Terraform
+
+6. ECS Production cluster and services created
+
+7. ECS VPC Link (CTLZ) configured for API Gateway connectivity
+
+8. Lambda function created for SSL management
+```
 
 ---
 
-# Networking (Managed by Network Team)
+# Infrastructure Architecture
 
-Core networking components are provisioned and managed by the **Network Team**.
+The Mobile BFF service is deployed using the following AWS components:
 
-These components include:
+* Container images stored in Amazon ECR
+* Containers run inside Amazon ECS
+* Compute powered by AWS Fargate
 
-* VPC
-* Private Subnets
-* Public Subnets
-* Transit Gateway
-* Route Tables
-* Security Groups
+### Deployment Flow
 
-The Terraform stack references these resources using data sources to integrate the Mobile BFF services with the existing network architecture.
+```
+User Request
+      │
+      ▼
+Load Balancer
+      │
+      ▼
+ECS Cluster (mobile-prod-ecs-us-west-2)
+      │
+      ▼
+ECS Service (mobilebff-prod-ecs-fargate-us-west-2)
+      │
+      ▼
+Task Definition
+      │
+      ├── mobile-bff
+      ├── ecs-service-connect
+      ├── datadog
+      └── aquasec
+```
+
+---
+
+# Container Images
+
+The ECS task runs the following containers:
+
+| Container           | Purpose                                    |
+| ------------------- | ------------------------------------------ |
+| mobile-bff          | Main backend service handling API requests |
+| ecs-service-connect | Enables service discovery within ECS       |
+| datadog             | Monitoring and observability agent         |
+| aquasec             | Container security scanning                |
+
+---
+
+# ECS Configuration
+
+### ECS Cluster
+
+```
+mobile-prod-ecs-us-west-2
+```
+
+### ECS Service
+
+```
+mobilebff-prod-ecs-fargate-us-west-2
+```
+
+### Task Definition
+
+The service runs tasks containing four containers responsible for application logic, monitoring, networking, and security.
+
+---
+
+# Health Check Endpoints
+
+These endpoints are used internally to verify the health of the infrastructure.
+
+| Endpoint                                                      | Description                     |
+| ------------------------------------------------------------- | ------------------------------- |
+| https://bff-api.mobile.bwhhg.io/health/live                   | Infrastructure health check     |
+| https://bff.bff-api.mobile.bwhhotelgroup.com/prod/health/live | Production service health check |
 
 ---
 
@@ -57,183 +125,87 @@ The Terraform stack references these resources using data sources to integrate t
 
 Secrets used by the Mobile BFF production services are securely managed using **HashiCorp Vault** and **AWS Secrets Manager**.
 
-## Secret Flow
+### Secret Flow
 
+```
 HashiCorp Vault
-↓
+      ↓
 Terraform retrieves secrets
-↓
+      ↓
 Secrets stored in AWS Secrets Manager
-↓
+      ↓
 ECS services consume secrets at runtime
+```
 
-HashiCorp Vault acts as the **primary secret storage**, while AWS Secrets Manager securely exposes those secrets to AWS services.
+HashiCorp Vault acts as the **primary secret storage**, while AWS Secrets Manager is used to make those secrets available to AWS services securely.
 
+### Benefits of This Approach
 
-## Purpose of Key Secrets
-
-**SSL Certificate Secrets** – Used for secure HTTPS communication
-
-**JWT Secret** – Used for service authentication
-
-**Aqua Token** – Used for container security scanning
-
-**Datadog API Key** – Used for monitoring and observability
-
-**Role ID / Secret ID** – Used for secure service authentication
-
-## Benefits
-
-* Centralized secret management using Vault
+* Centralized secret management in Vault
 * Secure integration with AWS infrastructure
-* No secrets stored in Terraform code or Git repositories
+* Secrets are never stored in Terraform code or Git repositories
 * ECS services retrieve secrets securely during runtime
 
 ---
 
-# Amazon ECR (Production)
+# Monitoring & Observability
 
-Amazon Elastic Container Registry is used to store Docker images for the Mobile BFF services.
+Monitoring and logging are handled through:
 
-Responsibilities include:
+* Datadog agent container
+* Amazon CloudWatch logs
+* Application health endpoints
 
-* Storing versioned container images
-* Enabling CI/CD deployment workflows
-* Secure container image storage
+Metrics monitored include:
 
-ECS services pull container images directly from ECR during deployment.
-
----
-
-# Amazon Kinesis Firehose
-
-Amazon Kinesis Firehose is used for streaming logs and events generated by the Mobile BFF services.
-
-Responsibilities include:
-
-* Collecting application logs
-* Delivering logs to downstream storage or analytics platforms
-* Supporting monitoring and observability
+* CPU usage
+* Memory usage
+* Container health
+* API availability
 
 ---
 
-# ECS Deployment Architecture
+# Security
 
-The Mobile BFF production application runs on **Amazon ECS using AWS Fargate**.
+Security controls include:
 
-## Deployment Flow
+* Container scanning with Aqua Security
+* IAM role-based access control
+* Secrets stored in secure secret management services
 
-ECR
-↓
-ECS Cluster
-↓
-ECS Service
-↓
-ECS Task Definition
-↓
-Containers
-
-## ECS Components
-
-### ECS Cluster
-
-Cluster Name:
-
-mobile-prod-ecs-us-west-2
-
-The ECS cluster provides the runtime environment for containerized services.
-
-### ECS Service
-
-Service Name:
-
-mobilebff-prod-ecs-fargate-us-west-2
-
-The ECS service ensures that the required number of tasks are always running and manages deployment and scaling.
-
-### ECS Task Definition
-
-Each ECS task contains multiple containers that work together to run the Mobile BFF application.
-
-The task includes the following containers:
-
-**mobile-bff**
-
-Primary application container running the Mobile Backend-for-Frontend service.
-
-**ecs-service-connect**
-
-AWS Service Connect container used for internal service discovery and communication.
-
-**datadog**
-
-Datadog monitoring agent used for metrics, logs, and observability.
-
-**aquasec**
-
-Aqua Security container used for container runtime security monitoring.
-
-This multi-container architecture ensures secure, observable, and scalable application deployment.
+Sensitive credentials and tokens are **not stored in this repository**.
 
 ---
 
-# ECS VPC Link
+# Terraform Deployment
 
-An **ECS VPC Link** allows API Gateway to communicate securely with private resources running inside the VPC.
+Infrastructure is managed using **Terraform**.
 
-Benefits include:
+Typical deployment workflow:
 
-* Secure internal connectivity
-* No public exposure of ECS services
-* Controlled routing between API Gateway and ECS
+1. Initialize Terraform
 
----
+```
+terraform init
+```
 
-# SSL Certificate Management (Lambda)
+2. Review infrastructure changes
 
-A dedicated **AWS Lambda function** is used to create and manage SSL certificates for the Mobile BFF container.
+```
+terraform plan
+```
 
-The Lambda function:
+3. Apply infrastructure
 
-* Generates server certificates
-* Uploads certificates to AWS Secrets Manager
-* Enables secure HTTPS communication for services
+```
+terraform apply
+```
 
-This automation ensures certificates are created and stored securely without manual intervention.
-
----
-
-# Service Health Check Endpoints
-
-Internal endpoints are available to verify the health and availability of the Mobile BFF production services.
-
-These endpoints are used for monitoring, diagnostics, and infrastructure health verification.
-
-## Health Check URLs
-
-Primary Health Endpoint
-
-https://bff-api.mobile.bwhhg.io/health/live
-
-API Gateway Health Endpoint
-
-https://bff.bff-api.mobile.bwhhotelgroup.com/prod/health/live
-
-## Purpose
-
-These endpoints confirm that:
-
-* ECS services are running
-* Containers are healthy
-* The application is reachable through the infrastructure
-
-A successful response returns **HTTP 200 OK**, indicating that the service is operational.
+Terraform state is stored remotely according to the organization’s infrastructure standards.
 
 ---
 
-# Terraform Stack Structure
-
-The Terraform code is organized into environment-specific stacks.
+# Repository Structure
 
 ```
 bwh-mobile-bff
@@ -263,63 +235,10 @@ bwh-mobile-bff
         └── versions.tf
 ```
 
-Each Terraform file provisions specific AWS resources required by the Mobile BFF infrastructure.
-
----
-
-# Terraform Commands
-
-The following Terraform commands are commonly used to manage infrastructure.
-
-### Initialize Terraform
-
-terraform init
-
-### Preview Infrastructure Changes
-
-terraform plan
-
-### Apply Infrastructure Changes
-
-terraform apply
-
-### Destroy Infrastructure (if required)
-
-terraform destroy
-
----
-
-# Monitoring and Observability
-
-The Mobile BFF services are monitored using **Datadog**.
-
-Datadog provides:
-
-* Application performance monitoring
-* Container monitoring
-* Log aggregation
-* Metrics collection
-* Alerting and incident monitoring
-
-The **Datadog agent runs as a sidecar container inside the ECS task**, collecting metrics and logs from the application containers.
-
----
-
-# Security
-
-Container runtime security is implemented using **Aqua Security (AquaSec)**.
-
-AquaSec provides:
-
-* Container vulnerability monitoring
-* Runtime threat detection
-* Security policy enforcement
-* Protection against malicious container activity
-
-The AquaSec container runs alongside the application container inside the ECS task to ensure secure container execution.
-
 ---
 
 # Maintainers
 
-This infrastructure is maintained by the **Cloud / DevOps Engineering Team** responsible for the Mobile platform.
+Infrastructure maintained by the **Cloud / DevOps Team**.
+
+For infrastructure changes or production issues, contact the platform engineering team.
