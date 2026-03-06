@@ -49,9 +49,9 @@ The production infrastructure was created in the following sequence:
 
    The ECS stack was applied in two stages:
 
-   • During the first Terraform apply, the Lambda-based SSL management configuration was temporarily commented out because it required the `mobile_bff_cert_renewal` resources to exist.
+   • During the first tfv apply, the Lambda-based SSL management configuration was temporarily commented out because it required the `mobile_bff_cert_renewal` resources to exist.
 
-   • After the required resources were created, the SSL management configuration was uncommented and Terraform was applied again.
+   • After the required resources were created, the SSL management configuration was uncommented and tfv was applied again.
 
 7. ECS VPC Link (CTLZ) was required to allow API Gateway to communicate with services running inside the VPC.
 
