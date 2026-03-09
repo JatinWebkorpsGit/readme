@@ -75,6 +75,10 @@ The production infrastructure was created in the following sequence:
    During the first apply, the `request_layer.zip` file was generated.  
    After the layer artifact was created, `tfv apply` was executed again, and the remaining resources in the stack were successfully provisioned.
 
+   CSR Request:
+   A CSR (Certificate Signing Request) was raised through **Cherwell** for this stack.  
+   Service Request (SR) Number: **2992821**
+
    The SSL management stack creates a Lambda function responsible for certificate renewal and an EventBridge rule that triggers the Lambda.
 
    Post Deployment Validation:
