@@ -59,33 +59,33 @@ The production infrastructure was created in the following sequence:
    https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_ecs_prod
 
    Note:
-   The Mobile team did not have sufficient permissions to create the VPC Link.
-   Therefore, a request was raised with the Infrastructure/Platform Engineering team,
+   The Mobile team did not have sufficient permissions to create the VPC Link.  
+   Therefore, a request was raised with the Infrastructure Engineering team,  
    and they executed `tfv apply` to provision the VPC Link.
+
+   Change Request: CR-38424
 
 8. Lambda-based SSL management infrastructure was deployed for certificate management and renewal.
 
    Terraform Stack:  
    https://github.com/bwhhg/bwh-mobile-bff/tree/main/stacks/mobile_bff_ssl_mgmt_prod
 
+   Note:
+   While applying `tfv apply` on this stack, all resources were not created in the first execution.  
+   During the first apply, the `request_layer.zip` file was generated.  
+   After the layer artifact was created, `tfv apply` was executed again, and the remaining resources in the stack were successfully provisioned.
+
    The SSL management stack creates a Lambda function responsible for certificate renewal and an EventBridge rule that triggers the Lambda.
 
    Post Deployment Validation:
 
-   a. Navigate to the EventBridge rule created by the SSL management stack.
-
-   b. Open the **Trigger** configuration.
-
-   c. Go to **Targets** and select the Lambda function target.
-
-   d. View the **Constant Input** section and copy the JSON payload.
-
-   e. Navigate to the created Lambda function.
-
-   f. Open the **Test** tab.
-
-   g. Paste the copied JSON payload into the test event.
-
+   a. Navigate to the EventBridge rule created by the SSL management stack.  
+   b. Open the **Trigger** configuration.  
+   c. Go to **Targets** and select the Lambda function target.  
+   d. View the **Constant Input** section and copy the JSON payload.  
+   e. Navigate to the created Lambda function.  
+   f. Open the **Test** tab.  
+   g. Paste the copied JSON payload into the test event.  
    h. Run the test to trigger the Lambda and verify certificate renewal.
 
    This step ensures the certificate renewal workflow is functioning correctly.
